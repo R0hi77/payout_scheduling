@@ -1,0 +1,79 @@
+name: CI pipeline for payout scheduling backend
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  test:
+    name: unit testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout main
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+      - name: install dependencies
+        run: npm install
+      - name: run test cases
+        run: npm run test
+  
+  build:
+    name: build into docker image
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      IMG_TAG: latest
+      USER: R0hi77
+      REGISTRY: ghcr.io
+      VERSION: v1
+
+    steps:
+      - name: checkout main
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: build image
+        run: docker compose -f docker-compose.yml build
+      - name: login into registry
+        run: | 
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.USER }} --password-stdin
+          PROJECT_NAME=$(basename $(pwd) | tr '[:upper:]' '[:lower:]' | sed 's/[^a-zA-Z0-9]//g')
+          docker tag ${PROJECT_NAME}_app ${{ env.REGISTRY }}/${{ env.USER }}/payoo:${{ env.VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.USER }}/payoo:${{ env.VERSION }}
+
+  scan:
+    name: scan docker image and send results
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      USER: R0hi77
+      REGISTRY: ghcr.io
+      VERSION: v1
+
+    steps:
+      - name: scan with trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.USER }}/payoo:${{ env.VERSION }}'
+          security-checks: 'vuln,secret'
+          format: 'sarif'
+          output: 'image-scan-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      - name: send results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'image-scan-results.sarif'
+          category: 'image'

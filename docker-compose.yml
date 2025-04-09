@@ -1,0 +1,23 @@
+version: "3"
+
+volumes:
+  server-vol:
+
+services:
+  app:
+    # image: registry/namespace/image-name
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=${PORT}
+      - MONGO_DB_URL=${MONGO_DB_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - TWILLIO_SID=${TWILLIO_SID}
+      - TWILLIO_SECRET=${TWILLIO_SECRET}
+    volumes:
+      - server-vol:/var/tmp
+    restart: unless-stopped
+
