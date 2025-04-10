@@ -12,6 +12,8 @@ jobs:
   test:
     name: unit testing
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
     steps:
       - name: checkout main
