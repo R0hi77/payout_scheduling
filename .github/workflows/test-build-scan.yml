@@ -38,9 +38,10 @@ jobs:
     env:
       IMG_TAG: latest
       USER: r0hi77
-      REPO: payout_scheduling
+      IMAGE_NAME: payoo:latest
       REGISTRY: ghcr.io
       VERSION: v1
+      REPO: payout_scheduling
 
     steps:
       - name: checkout main
@@ -53,10 +54,8 @@ jobs:
       - name: login into registry
         run: | 
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.USER }} --password-stdin
-          PROJECT_NAME=$(basename $(pwd) | tr '[:upper:]' '[:lower:]' | sed 's/[^a-zA-Z0-9]//g')
-          USER_LOWER=$(echo "${{ env.USER }}" | tr '[:upper:]' '[:lower:]')
-          docker tag ${PROJECT_NAME}_app ${{ env.REGISTRY }}/${USER_LOWER}/${{ env.REPO }}:${{ env.VERSION }}
-          docker push ${{ env.REGISTRY }}/${USER_LOWER}/${{ env.REPO }}:${{ env.VERSION }}
+          docker tag ${{ env.IMAGE_NAME }} ${{ env.REGISTRY }}/${{ env.USER }}/${{ env.REPO }}:${{ env.VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.USER }}/${{ env.REPO }}:${{ env.VERSION }}
 
   scan:
     name: scan docker image and send results
