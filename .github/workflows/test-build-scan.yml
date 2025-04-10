@@ -10,6 +10,7 @@ on:
 permissions:
   packages: write
   contents: read
+  
 
 jobs:
   test:
@@ -72,6 +73,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+      security-events: write
 
     steps:
       - name: checkout main
@@ -82,7 +84,6 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.REGISTRY }}/${{ env.USER }}/${{ env.REPO }}:${{ env.VERSION}}'
-          security-checks: 'vuln,secret'
           format: 'sarif'
           output: 'image-scan-results.sarif'
           severity: 'CRITICAL,HIGH'
