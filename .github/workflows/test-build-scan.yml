@@ -69,6 +69,9 @@ jobs:
       REGISTRY: ghcr.io
       VERSION: v1
       REPO: payout_scheduling
+    permissions:
+      packages: write
+      contents: read
 
     steps:
       - name: checkout main
